@@ -16088,11 +16088,9 @@ JSONPath.prototype.vm = vm;
 // src/action.ts
 var Action = class {
   key;
-  status;
   dataPaths;
-  constructor(outputKey, dataPaths = [], status = 0 /* PENDING */) {
+  constructor(outputKey, dataPaths = []) {
     this.key = outputKey;
-    this.status = status;
     this.dataPaths = dataPaths;
   }
   getActionData(workingData) {
@@ -16115,6 +16113,13 @@ ${dataPath.path} could not be found in the dataset.`);
       throw Error("No data paths provided");
     }
     return data;
+  }
+  invoke(input) {
+    if (input[this.key]) {
+      console.log(`Action ${this.key} is already complete.`);
+      return input[this.key];
+    }
+    return this.runAction(input);
   }
 };
 
@@ -16140,8 +16145,8 @@ init_chat2();
 var AgentAction = class extends Action {
   agent;
   llm;
-  constructor(agent, llm, outputKey, dataPaths = [], status = 0 /* PENDING */) {
-    super(outputKey, dataPaths, status);
+  constructor(agent, llm, outputKey, dataPaths = []) {
+    super(outputKey, dataPaths);
     this.agent = agent;
     this.llm = llm;
   }
@@ -16570,7 +16575,7 @@ init_lib();
 
 // src/actions/SearchSummaryAction.ts
 var SearchSummaryAction = class extends agentaction_default {
-  async invoke(data) {
+  async runAction(data) {
     let { query, research } = this.getActionData(data);
     const prompt = ChatPromptTemplate.fromMessages([
       this.getSystemPrompt(),
@@ -16624,7 +16629,7 @@ var SearchSummaryAction_default = SearchSummaryAction;
 
 // src/actions/RelatedQuestionsAction.ts
 var RelatedQuestionsAction = class extends agentaction_default {
-  async invoke(data) {
+  async runAction(data) {
     let { query, research } = this.getActionData(data);
     const prompt = ChatPromptTemplate.fromMessages([
       this.getSystemPrompt(),

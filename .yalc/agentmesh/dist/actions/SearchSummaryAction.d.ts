@@ -6,7 +6,7 @@ import { RunnableInput } from '../runnable';
  * @returns {any} - Object { query, summary, citedResearch }
  */
 declare class SearchSummaryAction extends AgentAction {
-    invoke(data: RunnableInput): Promise<{
+    runAction(data: RunnableInput): Promise<{
         query: any;
         summary: string;
         citedResearch: any[];

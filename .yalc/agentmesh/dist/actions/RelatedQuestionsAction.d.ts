@@ -6,6 +6,6 @@ import { RunnableInput } from '../runnable';
  * @returns {any} - Array [ relatedQuestions ]
  */
 declare class RelatedQuestionsAction extends AgentAction {
-    invoke(data: RunnableInput): Promise<string[]>;
+    runAction(data: RunnableInput): Promise<string[]>;
 }
 export default RelatedQuestionsAction;

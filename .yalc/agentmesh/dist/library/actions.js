@@ -15614,11 +15614,9 @@ JSONPath.prototype.vm = vm;
 // src/action.ts
 var Action = class {
   key;
-  status;
   dataPaths;
-  constructor(outputKey, dataPaths = [], status = 0 /* PENDING */) {
+  constructor(outputKey, dataPaths = []) {
     this.key = outputKey;
-    this.status = status;
     this.dataPaths = dataPaths;
   }
   getActionData(workingData) {
@@ -15641,6 +15639,13 @@ ${dataPath.path} could not be found in the dataset.`);
       throw Error("No data paths provided");
     }
     return data;
+  }
+  invoke(input) {
+    if (input[this.key]) {
+      console.log(`Action ${this.key} is already complete.`);
+      return input[this.key];
+    }
+    return this.runAction(input);
   }
 };
 
@@ -15666,8 +15671,8 @@ init_chat2();
 var AgentAction = class extends Action {
   agent;
   llm;
-  constructor(agent, llm, outputKey, dataPaths = [], status = 0 /* PENDING */) {
-    super(outputKey, dataPaths, status);
+  constructor(agent, llm, outputKey, dataPaths = []) {
+    super(outputKey, dataPaths);
     this.agent = agent;
     this.llm = llm;
   }
@@ -15686,13 +15691,91 @@ var agentaction_default = AgentAction;
 
 // src/toolaction.ts
 var ToolAction = class extends Action {
-  constructor(outputKey, dataPaths = [], status = 0 /* PENDING */) {
-    super(outputKey, dataPaths, status);
+  constructor(outputKey, dataPaths = []) {
+    super(outputKey, dataPaths);
   }
 };
 var toolaction_default = ToolAction;
+
+// src/conditionalaction.ts
+var Operator = /* @__PURE__ */ ((Operator2) => {
+  Operator2["EQUALS"] = "==";
+  Operator2["NOT_EQUALS"] = "!=";
+  Operator2["GREATER_THAN"] = ">";
+  Operator2["LESS_THAN"] = "<";
+  Operator2["GREATER_THAN_OR_EQUALS"] = ">=";
+  Operator2["LESS_THAN_OR_EQUALS"] = "<=";
+  return Operator2;
+})(Operator || {});
+var ConditionalAction = class {
+  key;
+  condition;
+  ifAction;
+  elseAction;
+  constructor(key, condition, ifAction, elseAction) {
+    this.key = "CONDITIONAL:" + key;
+    this.condition = condition;
+    this.ifAction = ifAction;
+    this.elseAction = elseAction;
+  }
+  getActionData(workingData) {
+    let data = {};
+    if (this.condition.dataPath) {
+      let selection = JSONPath({ path: this.condition.dataPath.path, json: workingData });
+      if (selection.length === 1) {
+        return selection[0];
+      } else {
+        throw Error(`An Error Occured.
+${this.condition.dataPath.path} could not be found in the dataset.`);
+      }
+    } else {
+      throw Error("No data paths provided");
+    }
+  }
+  async invoke(data) {
+    const value = this.getActionData(data);
+    const operator = this.condition.operator;
+    const conditionValue = this.condition.value;
+    switch (operator) {
+      case "==" /* EQUALS */:
+        if (value === conditionValue) {
+          return await this.ifAction.invoke(data);
+        }
+        break;
+      case "!=" /* NOT_EQUALS */:
+        if (value !== conditionValue) {
+          return await this.ifAction.invoke(data);
+        }
+        break;
+      case ">" /* GREATER_THAN */:
+        if (value > conditionValue) {
+          return await this.ifAction.invoke(data);
+        }
+        break;
+      case "<" /* LESS_THAN */:
+        if (value < conditionValue) {
+          return await this.ifAction.invoke(data);
+        }
+        break;
+      case ">=" /* GREATER_THAN_OR_EQUALS */:
+        if (value >= conditionValue) {
+          return await this.ifAction.invoke(data);
+        }
+        break;
+      case "<=" /* LESS_THAN_OR_EQUALS */:
+        if (value <= conditionValue) {
+          return await this.ifAction.invoke(data);
+        }
+        break;
+    }
+    return await this.elseAction.invoke(data);
+  }
+};
+var conditionalaction_default = ConditionalAction;
 export {
   agentaction_default as AgentAction,
+  conditionalaction_default as ConditionalAction,
+  Operator,
   toolaction_default as ToolAction
 };
 /*! Bundled license information:

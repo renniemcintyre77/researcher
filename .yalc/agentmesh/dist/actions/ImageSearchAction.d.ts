@@ -6,6 +6,6 @@ import { RunnableInput } from '../runnable';
  * @returns {any} - Array [ { title, href, body} ]
  */
 declare class SearchAction extends ToolAction {
-    invoke(data: RunnableInput): Promise<any>;
+    runAction(data: RunnableInput): Promise<any>;
 }
 export default SearchAction;

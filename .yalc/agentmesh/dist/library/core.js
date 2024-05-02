@@ -9,15 +9,28 @@ var SOP = class _SOP {
   key;
   eventEmitter;
   parallel;
-  constructor(name, description, parallel = false) {
+  redis;
+  constructor(name, description, parallel = false, redis = null) {
+    var _a;
     this.name = name;
-    this.key = `SOP:name`;
+    this.key = `SOP:${name}`;
     this.description = description;
     this.actions = [];
     this.outputs = [];
     this.data = null;
     this.eventEmitter = new EventEmitter();
     this.parallel = parallel;
+    this.redis = redis;
+    (_a = this.redis) == null ? void 0 : _a.get(this.key, (err, reply) => {
+      if (reply) {
+        this.data = JSON.parse(reply);
+      }
+    });
+  }
+  updateCache() {
+    if (this.redis) {
+      this.redis.set(this.key, JSON.stringify(this.data));
+    }
   }
   onActionComplete(listener) {
     this.eventEmitter.on("actionComplete", listener);
@@ -32,9 +45,25 @@ var SOP = class _SOP {
         this.eventEmitter.emit("actionComplete", eventData);
       });
     }
+    if (runnable.key.includes("CONDITIONAL")) {
+      const conditionalAction = runnable;
+      if (conditionalAction.ifAction instanceof _SOP) {
+        conditionalAction.ifAction.onActionComplete((eventData) => {
+          this.eventEmitter.emit("actionComplete", eventData);
+        });
+      }
+      if (conditionalAction.elseAction instanceof _SOP) {
+        conditionalAction.elseAction.onActionComplete((eventData) => {
+          this.eventEmitter.emit("actionComplete", eventData);
+        });
+      }
+    }
+    this.updateCache();
   }
   async invoke(data) {
-    this.data = data;
+    if (this.data === null) {
+      this.data = data;
+    }
     if (this.parallel) {
       const parallelResults = await Promise.all(this.actions.map((action) => action.invoke(this.data)));
       const consolidatedData = [];
@@ -42,6 +71,7 @@ var SOP = class _SOP {
         const action = this.actions[index];
         this.data[action.key] = response;
         consolidatedData.push({ key: action.key, data: response });
+        this.updateCache();
       });
       this.eventEmitter.emit(
         "actionComplete",
@@ -50,12 +80,16 @@ var SOP = class _SOP {
     } else {
       for (let i = 0; i < this.actions.length; i++) {
         const response = await this.actions[i].invoke(this.data);
-        if (!this.actions[i].key.includes("SOP")) {
+        if (!this.actions[i].key.includes("SOP") && !this.actions[i].key.includes("CONDITIONAL")) {
           this.data[this.actions[i].key] = response;
+          this.updateCache();
           this.eventEmitter.emit(
             "actionComplete",
             [{ key: this.actions[i].key, data: response }]
           );
+        } else {
+          this.data = response;
+          this.updateCache();
         }
       }
     }
