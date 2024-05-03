@@ -1,12 +1,8 @@
 /node_modules
 /dist
 /build
-/src
 /test
 /coverage
 /package-lock.json
-/package.json
-/tsconfig.json
-/tsconfig.json
 .env
 .yalc
