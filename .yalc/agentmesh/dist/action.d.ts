@@ -7,6 +7,7 @@ type DataPaths = DataPath[];
 declare abstract class Action implements Runnable {
     key: string;
     dataPaths: DataPaths;
+    id: string;
     constructor(outputKey: string, dataPaths?: DataPaths);
     getActionData(workingData: RunnableInput): Record<string, any>;
     invoke(input?: RunnableInput): RunnableOutput;

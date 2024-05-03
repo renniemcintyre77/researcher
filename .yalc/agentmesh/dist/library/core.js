@@ -44,8 +44,7 @@ var SOP = class _SOP {
       runnable.onActionComplete((eventData) => {
         this.eventEmitter.emit("actionComplete", eventData);
       });
-    }
-    if (runnable.key.includes("CONDITIONAL")) {
+    } else if (runnable.key.includes("CONDITIONAL")) {
       const conditionalAction = runnable;
       if (conditionalAction.ifAction instanceof _SOP) {
         conditionalAction.ifAction.onActionComplete((eventData) => {
@@ -57,12 +56,15 @@ var SOP = class _SOP {
           this.eventEmitter.emit("actionComplete", eventData);
         });
       }
+    } else {
+      runnable.id = `${this.key}:${runnable.key}:${this.actions.length + 1}`;
     }
     this.updateCache();
   }
   async invoke(data) {
     if (this.data === null) {
       this.data = data;
+      this.data.completedActions = [];
     }
     if (this.parallel) {
       const parallelResults = await Promise.all(this.actions.map((action) => action.invoke(this.data)));
@@ -82,6 +84,7 @@ var SOP = class _SOP {
         const response = await this.actions[i].invoke(this.data);
         if (!this.actions[i].key.includes("SOP") && !this.actions[i].key.includes("CONDITIONAL")) {
           this.data[this.actions[i].key] = response;
+          this.data.completedActions.push(this.actions[i].id);
           this.updateCache();
           this.eventEmitter.emit(
             "actionComplete",

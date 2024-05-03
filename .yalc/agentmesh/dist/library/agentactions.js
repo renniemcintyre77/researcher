@@ -16089,9 +16089,11 @@ JSONPath.prototype.vm = vm;
 var Action = class {
   key;
   dataPaths;
+  id;
   constructor(outputKey, dataPaths = []) {
     this.key = outputKey;
     this.dataPaths = dataPaths;
+    this.id = "";
   }
   getActionData(workingData) {
     let data = {};
@@ -16115,8 +16117,8 @@ ${dataPath.path} could not be found in the dataset.`);
     return data;
   }
   invoke(input) {
-    if (input[this.key]) {
-      console.log(`Action ${this.key} is already complete.`);
+    if (input.completedActions.includes(this.id)) {
+      console.log(`Action ${this.key} with the id #${this.id}# is already complete.`);
       return input[this.key];
     }
     return this.runAction(input);
@@ -16145,9 +16147,9 @@ init_chat2();
 var AgentAction = class extends Action {
   agent;
   llm;
-  constructor(agent, llm, outputKey, dataPaths = []) {
+  constructor(agent2, llm, outputKey, dataPaths = []) {
     super(outputKey, dataPaths);
-    this.agent = agent;
+    this.agent = agent2;
     this.llm = llm;
   }
   getSystemPrompt() {
@@ -16671,9 +16673,126 @@ var RelatedQuestionsAction = class extends agentaction_default {
   }
 };
 var RelatedQuestionsAction_default = RelatedQuestionsAction;
+
+// src/actions/SummaryAction.ts
+var agent = {
+  role: "Summarizer",
+  goal: "You are an expert content summarizer. You take content in and output a JSON formatted array of the summary using the format provided.",
+  backstory: "You are an all-knowing AI with a 476 I.Q. that deeply understands concepts."
+};
+var SummaryAction = class extends agentaction_default {
+  constructor(llm, outputKey, dataPaths = []) {
+    super(agent, llm, outputKey, dataPaths);
+  }
+  async runAction(data) {
+    let { content } = this.getActionData(data);
+    const prompt = ChatPromptTemplate.fromMessages([
+      this.getSystemPrompt(),
+      HumanMessagePromptTemplate.fromTemplate(`
+            Take a deep breath and think step by step about how to best accomplish this goal using the following steps.
+
+            OUTPUT SECTIONS
+            Combine all of your understanding of the content into a single, 20-word sentence This is the ONE SENTENCE SUMMARY:.
+
+            Output the 10 most important points of the content as a list with no more than 15 words per point - These are the MAIN POINTS:.
+
+            Output a list of the 5 best takeaways from the content - These are the TAKEAWAYS:.
+
+            INPUT: {{content}}
+
+            {{format_instructions}}
+            `, { templateFormat: "mustache" })
+    ]);
+    const parser = StructuredOutputParser.fromZodSchema(z.object({
+      oneSentenceSummary: z.string().describe("A 20-word sentence summarizing the content."),
+      mainPoints: z.array(z.string().describe("One of the MAIN POINTS")).describe("The 10 MAIN POINTS"),
+      takeaways: z.array(z.string().describe("One of the 5 best takeaways from the content.")).describe("The 5 TAKEAWAYS")
+    }));
+    const response = await prompt.pipe(this.llm).pipe(parser).invoke({
+      role: this.agent.role,
+      goal: this.agent.goal,
+      backstory: this.agent.backstory,
+      content,
+      format_instructions: parser.getFormatInstructions()
+    });
+    return response;
+  }
+};
+var SummaryAction_default = SummaryAction;
+
+// src/actions/FiveSentenceSummaryAction.ts
+import { OutputFixingParser } from "langchain/output_parsers";
+var summarizer = {
+  role: "Summarizer",
+  goal: "You create concise summaries of--or answers to--arbitrary input at 5 different levels of depth: 5 words, 4 words, 3 words, 2 words, and 1 word.",
+  backstory: "You are an all-knowing AI with a 476 I.Q. that deeply understands concepts."
+};
+var FiveSentenceSummaryAction = class extends agentaction_default {
+  constructor(llm, outputKey, dataPaths = []) {
+    super(summarizer, llm, outputKey, dataPaths);
+  }
+  async runAction(data) {
+    let { content } = this.getActionData(data);
+    const prompt = ChatPromptTemplate.fromMessages([
+      this.getSystemPrompt(),
+      HumanMessagePromptTemplate.fromTemplate(`
+            STEPS
+            Deeply understand the input.
+
+            Think for 912 virtual minutes about the meaning of the input.
+
+            Create a virtual mindmap of the meaning of the content in your mind.
+
+            Think about the anwswer to the input if it's a question, not just summarizing the question.
+
+            OUPTUT
+            Output one section called "5 Levels" that perfectly capture the true essence of the input, it's answer, and/or it's meaning, with 5 different levels of depth.
+
+            5 words.
+
+            4 words.
+
+            3 words.
+
+            2 words.
+
+            1 word.
+
+            OUTPUT FORMAT
+            Output the summary as a descending numbered list with a blank line between each level of depth.
+
+            NOTE: Do not just make the sentence shorter. Reframe the meaning as best as possible for each depth level.
+
+            Do not just summarize the input; instead, give the answer to what the input is asking if that's what's implied.
+
+            {{content}}
+
+            {{format_instructions}}
+            `, { templateFormat: "mustache" })
+    ]);
+    const parser = new StringOutputParser();
+    try {
+      const response = await prompt.pipe(this.llm).pipe(parser).invoke({
+        role: this.agent.role,
+        goal: this.agent.goal,
+        backstory: this.agent.backstory,
+        content,
+        format_instructions: parser.getFormatInstructions()
+      });
+      return response;
+    } catch (error) {
+      const fixParser = OutputFixingParser.fromLLM(this.llm, parser);
+      const response = fixParser.parse(error.message);
+      return response;
+    }
+  }
+};
+var FiveSentenceSummaryAction_default = FiveSentenceSummaryAction;
 export {
+  FiveSentenceSummaryAction_default as FiveSentenceSummaryAction,
   RelatedQuestionsAction_default as RelatedQuestionsAction,
-  SearchSummaryAction_default as SearchSummaryAction
+  SearchSummaryAction_default as SearchSummaryAction,
+  SummaryAction_default as SummaryAction
 };
 /*! Bundled license information:
 

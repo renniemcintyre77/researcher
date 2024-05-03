@@ -1,3 +1,5 @@
 import SearchSummaryAction from '../actions/SearchSummaryAction';
 import RelatedQuestionsAction from '../actions/RelatedQuestionsAction';
-export { SearchSummaryAction, RelatedQuestionsAction };
+import SummaryAction from '../actions/SummaryAction';
+import FiveSentenceSummaryAction from '../actions/FiveSentenceSummaryAction';
+export { SearchSummaryAction, RelatedQuestionsAction, SummaryAction, FiveSentenceSummaryAction };

@@ -15615,9 +15615,11 @@ JSONPath.prototype.vm = vm;
 var Action = class {
   key;
   dataPaths;
+  id;
   constructor(outputKey, dataPaths = []) {
     this.key = outputKey;
     this.dataPaths = dataPaths;
+    this.id = "";
   }
   getActionData(workingData) {
     let data = {};
@@ -15641,8 +15643,8 @@ ${dataPath.path} could not be found in the dataset.`);
     return data;
   }
   invoke(input) {
-    if (input[this.key]) {
-      console.log(`Action ${this.key} is already complete.`);
+    if (input.completedActions.includes(this.id)) {
+      console.log(`Action ${this.key} with the id #${this.id}# is already complete.`);
       return input[this.key];
     }
     return this.runAction(input);
