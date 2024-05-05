@@ -15276,62 +15276,65 @@ var Provider = /* @__PURE__ */ ((Provider2) => {
   Provider2[Provider2["togetherai"] = 3] = "togetherai";
   return Provider2;
 })(Provider || {});
+var GetModel = (options, cache2) => {
+  return new llmFactory(options, cache2).initialise();
+};
 var llmFactory = class {
   options;
   cache;
-  constructor(options, cache2 = false) {
+  constructor(options, cache2) {
     this.options = options;
     this.cache = cache2;
   }
-  async initialise() {
+  initialise() {
     switch (this.options.provider) {
       case 0 /* groq */:
-        return await this.getGroqModel(this.options.model, this.cache);
+        return this.getGroqModel();
       case 1 /* gemini */:
-        return await this.getGeminiModel(this.options.model, this.cache);
+        return this.getGeminiModel();
       case 2 /* openai */:
-        return await this.getOpenAIModel(this.options.model, this.cache);
+        return this.getOpenAIModel();
       case 3 /* togetherai */:
-        return await this.getTogetherAIModel(this.options.model, this.cache);
+        return this.getTogetherAIModel();
     }
   }
-  async getTogetherAIModel(model, cache2) {
+  getTogetherAIModel() {
     const llm2 = new ChatTogetherAI({
-      model,
+      model: this.options.model,
       apiKey: process.env.TOGETHER_AI_KEY,
       temperature: 0,
-      cache: cache2
+      cache: this.cache || false
     });
     return llm2;
   }
-  async getOpenAIModel(model, cache2) {
+  getOpenAIModel() {
     const llm2 = new ChatOpenAI2({
-      model,
+      model: this.options.model,
       apiKey: process.env.OPEN_AI_KEY,
       temperature: 0,
-      cache: cache2
+      cache: this.cache || false
     });
     return llm2;
   }
-  async getGroqModel(model, cache2) {
+  getGroqModel() {
     const llm2 = new ChatGroq({
-      model,
+      model: this.options.model,
       apiKey: process.env.GROQ_API_KEY,
-      cache: cache2
+      cache: this.cache || false
     });
     return llm2;
   }
-  async getGeminiModel(model, cache2) {
+  getGeminiModel() {
     const llm2 = new ChatGoogleGenerativeAI({
       apiKey: process.env.GEMINI_API_KEY,
-      model,
+      model: this.options.model,
       maxOutputTokens: 2048,
-      cache: cache2
+      cache: this.cache || false
     });
     return llm2;
   }
 };
-var llm_default = llmFactory;
+var llm_default = GetModel;
 
 // src/cache.ts
 import { Redis } from "ioredis";

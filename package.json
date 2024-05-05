@@ -5,6 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "build": "node esbuild.config.js",
     "start": "node esbuild.config.js && node ./dist/index.js"
   },
   "keywords": [],

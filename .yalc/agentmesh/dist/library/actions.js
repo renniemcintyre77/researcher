@@ -15616,10 +15616,14 @@ var Action = class {
   key;
   dataPaths;
   id;
-  constructor(outputKey, dataPaths = []) {
+  checkConditions;
+  parallel;
+  constructor(outputKey, dataPaths = [], parallel = false, checkConditions) {
     this.key = outputKey;
     this.dataPaths = dataPaths;
     this.id = "";
+    this.checkConditions = checkConditions || (() => true);
+    this.parallel = parallel;
   }
   getActionData(workingData) {
     let data = {};
@@ -15673,8 +15677,8 @@ init_chat2();
 var AgentAction = class extends Action {
   agent;
   llm;
-  constructor(agent, llm, outputKey, dataPaths = []) {
-    super(outputKey, dataPaths);
+  constructor(agent, llm, outputKey, dataPaths = [], parallel = false, checkConditions) {
+    super(outputKey, dataPaths, parallel, checkConditions);
     this.agent = agent;
     this.llm = llm;
   }
@@ -15693,8 +15697,8 @@ var agentaction_default = AgentAction;
 
 // src/toolaction.ts
 var ToolAction = class extends Action {
-  constructor(outputKey, dataPaths = []) {
-    super(outputKey, dataPaths);
+  constructor(outputKey, dataPaths = [], parallel = false, checkConditions) {
+    super(outputKey, dataPaths, parallel, checkConditions);
   }
 };
 var toolaction_default = ToolAction;
@@ -15707,6 +15711,7 @@ var Operator = /* @__PURE__ */ ((Operator2) => {
   Operator2["LESS_THAN"] = "<";
   Operator2["GREATER_THAN_OR_EQUALS"] = ">=";
   Operator2["LESS_THAN_OR_EQUALS"] = "<=";
+  Operator2["IS_NOT_NULL"] = "is not null";
   return Operator2;
 })(Operator || {});
 var ConditionalAction = class {
@@ -15735,42 +15740,61 @@ ${this.condition.dataPath.path} could not be found in the dataset.`);
     }
   }
   async invoke(data) {
-    const value = this.getActionData(data);
-    const operator = this.condition.operator;
-    const conditionValue = this.condition.value;
-    switch (operator) {
-      case "==" /* EQUALS */:
-        if (value === conditionValue) {
-          return await this.ifAction.invoke(data);
-        }
-        break;
-      case "!=" /* NOT_EQUALS */:
-        if (value !== conditionValue) {
-          return await this.ifAction.invoke(data);
-        }
-        break;
-      case ">" /* GREATER_THAN */:
-        if (value > conditionValue) {
-          return await this.ifAction.invoke(data);
-        }
-        break;
-      case "<" /* LESS_THAN */:
-        if (value < conditionValue) {
-          return await this.ifAction.invoke(data);
-        }
-        break;
-      case ">=" /* GREATER_THAN_OR_EQUALS */:
-        if (value >= conditionValue) {
-          return await this.ifAction.invoke(data);
-        }
-        break;
-      case "<=" /* LESS_THAN_OR_EQUALS */:
-        if (value <= conditionValue) {
-          return await this.ifAction.invoke(data);
-        }
-        break;
+    const runAction = async (action, data2) => {
+      const response = await action.invoke(data2);
+      if (action.key.includes("SOP")) {
+        data2 = response;
+      } else {
+        data2[action.key] = response;
+      }
+      return data2;
+    };
+    try {
+      const value = this.getActionData(data);
+      const operator = this.condition.operator;
+      const conditionValue = this.condition.value;
+      switch (operator) {
+        case "==" /* EQUALS */:
+          if (value === conditionValue) {
+            return await runAction(this.ifAction, data);
+          }
+          break;
+        case "!=" /* NOT_EQUALS */:
+          if (value !== conditionValue) {
+            return await runAction(this.ifAction, data);
+          }
+          break;
+        case ">" /* GREATER_THAN */:
+          if (value > conditionValue) {
+            return await runAction(this.ifAction, data);
+          }
+          break;
+        case "<" /* LESS_THAN */:
+          if (value < conditionValue) {
+            return await runAction(this.ifAction, data);
+          }
+          break;
+        case ">=" /* GREATER_THAN_OR_EQUALS */:
+          if (value >= conditionValue) {
+            return await runAction(this.ifAction, data);
+          }
+          break;
+        case "<=" /* LESS_THAN_OR_EQUALS */:
+          if (value <= conditionValue) {
+            return await runAction(this.ifAction, data);
+          }
+          break;
+        case "is not null" /* IS_NOT_NULL */:
+          if (value !== null) {
+            return await runAction(this.ifAction, data);
+          }
+          break;
+      }
+    } catch (error) {
+      console.log(error);
+      return await runAction(this.elseAction, data);
     }
-    return await this.elseAction.invoke(data);
+    return await runAction(this.elseAction, data);
   }
 };
 var conditionalaction_default = ConditionalAction;

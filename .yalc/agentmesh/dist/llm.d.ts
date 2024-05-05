@@ -14,15 +14,6 @@ type llmOptions = {
     model: string;
 };
 type llm = ChatGroq | ChatOpenAI | ChatGoogleGenerativeAI | ChatTogetherAI;
-declare class llmFactory {
-    options: llmOptions;
-    cache: RedisCache | false;
-    constructor(options: llmOptions, cache?: RedisCache | false);
-    initialise(): Promise<llm>;
-    private getTogetherAIModel;
-    private getOpenAIModel;
-    private getGroqModel;
-    private getGeminiModel;
-}
-export default llmFactory;
-export { Provider, llm };
+declare const GetModel: (options: llmOptions, cache?: RedisCache) => llm;
+export default GetModel;
+export { Provider, llm, };

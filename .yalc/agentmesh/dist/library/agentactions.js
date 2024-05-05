@@ -16090,10 +16090,14 @@ var Action = class {
   key;
   dataPaths;
   id;
-  constructor(outputKey, dataPaths = []) {
+  checkConditions;
+  parallel;
+  constructor(outputKey, dataPaths = [], parallel = false, checkConditions) {
     this.key = outputKey;
     this.dataPaths = dataPaths;
     this.id = "";
+    this.checkConditions = checkConditions || (() => true);
+    this.parallel = parallel;
   }
   getActionData(workingData) {
     let data = {};
@@ -16147,8 +16151,8 @@ init_chat2();
 var AgentAction = class extends Action {
   agent;
   llm;
-  constructor(agent2, llm, outputKey, dataPaths = []) {
-    super(outputKey, dataPaths);
+  constructor(agent2, llm, outputKey, dataPaths = [], parallel = false, checkConditions) {
+    super(outputKey, dataPaths, parallel, checkConditions);
     this.agent = agent2;
     this.llm = llm;
   }
@@ -16681,8 +16685,8 @@ var agent = {
   backstory: "You are an all-knowing AI with a 476 I.Q. that deeply understands concepts."
 };
 var SummaryAction = class extends agentaction_default {
-  constructor(llm, outputKey, dataPaths = []) {
-    super(agent, llm, outputKey, dataPaths);
+  constructor(llm, outputKey, dataPaths = [], parallel = false, checkConditions) {
+    super(agent, llm, outputKey, dataPaths, parallel, checkConditions);
   }
   async runAction(data) {
     let { content } = this.getActionData(data);
@@ -16728,8 +16732,8 @@ var summarizer = {
   backstory: "You are an all-knowing AI with a 476 I.Q. that deeply understands concepts."
 };
 var FiveSentenceSummaryAction = class extends agentaction_default {
-  constructor(llm, outputKey, dataPaths = []) {
-    super(summarizer, llm, outputKey, dataPaths);
+  constructor(llm, outputKey, dataPaths = [], parallel = false, checkConditions) {
+    super(summarizer, llm, outputKey, dataPaths, parallel, checkConditions);
   }
   async runAction(data) {
     let { content } = this.getActionData(data);

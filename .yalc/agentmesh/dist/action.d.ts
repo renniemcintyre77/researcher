@@ -1,16 +1,12 @@
-import { Runnable, RunnableInput, RunnableOutput } from './runnable';
-type DataPath = {
-    path: string;
-    targetProperty: string;
-};
-type DataPaths = DataPath[];
-declare abstract class Action implements Runnable {
+import { Runnable, RunnableOutput } from './runnable';
+import DataStore from './DataStore';
+declare class Action implements Runnable {
     key: string;
-    dataPaths: DataPaths;
     id: string;
-    constructor(outputKey: string, dataPaths?: DataPaths);
-    getActionData(workingData: RunnableInput): Record<string, any>;
-    invoke(input?: RunnableInput): RunnableOutput;
-    protected abstract runAction(input?: RunnableInput): RunnableOutput;
+    parallel: boolean;
+    checkConditions?: (datastore: DataStore) => boolean;
+    runAction: (datastore: DataStore) => void;
+    constructor(key: string, parallel: boolean | undefined, run: (datastore: DataStore) => void, checkConditions?: (datastore: DataStore) => boolean);
+    invoke(datastore: DataStore): RunnableOutput;
 }
-export { Action, DataPath };
+export default Action;

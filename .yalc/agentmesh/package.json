@@ -66,6 +66,7 @@
         "@langchain/google-genai": "^0.0.11",
         "@langchain/groq": "^0.0.8",
         "@mozilla/readability": "^0.5.0",
+        "@types/lodash": "^4.17.1",
         "axios": "^1.6.8",
         "crawlee": "^3.9.2",
         "dotenv": "^16.4.5",
@@ -80,5 +81,5 @@
         "ytdl-core": "^4.11.5",
         "zod": "^3.22.5"
     },
-    "yalcSig": "d859fbc94614b7934bdc8e92bbbf3466"
+    "yalcSig": "16c9541016eb688c672db4babf293411"
 }

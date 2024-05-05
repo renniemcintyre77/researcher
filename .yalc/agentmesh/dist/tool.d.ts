@@ -1,6 +1,7 @@
+type ToolResponse = any;
 interface Tool {
     name: string;
     description: string;
-    invoke(input?: string): Promise<string>;
+    invoke: (...args: any[]) => Promise<ToolResponse>;
 }
-export default Tool;
+export { Tool, ToolResponse };

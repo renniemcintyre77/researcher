@@ -1,11 +1,2 @@
-import SearchAction from '../actions/SearchAction';
-import ImageSearchAction from '../actions/ImageSearchAction';
-import Serper from '../actions/Serper';
-import SerperSummaryAction from '../actions/SerperSummaryAction';
-import SerperImages from '../actions/SerperImages';
-import PeopleAlsoAskAction from '../actions/PeopleAlsoAskAction';
-import PageContentAction from '../actions/PageContentAction';
-import SerpContentAction from '../actions/SerpContentAction';
-import NewsSearchAction from '../actions/NewsSearchAction';
-import NewsContentAction from '../actions/NewsContentAction';
-export { SearchAction, ImageSearchAction, Serper, SerperSummaryAction, SerperImages, PeopleAlsoAskAction, PageContentAction, SerpContentAction, NewsSearchAction, NewsContentAction };
+import TestTool from '../tools/test';
+export { TestTool };

@@ -1,22 +1,19 @@
 /// <reference types="node" />
-import { Runnable, RunnableInput } from './runnable';
+import { Runnable } from './runnable';
 import { EventEmitter } from 'events';
-import { Redis } from 'ioredis';
+import Action from './action';
+import DataStore from './DataStore';
 declare class SOP implements Runnable {
     name: string;
     description: string;
-    actions: Runnable[];
+    actions: Action[];
     outputs: string[];
-    data: RunnableInput;
     key: string;
     eventEmitter: EventEmitter;
-    parallel: Boolean;
-    redis: Redis | null;
-    constructor(name: string, description: string, parallel?: boolean, redis?: Redis | null);
-    updateCache(): void;
-    onActionComplete(listener: (eventData: any[]) => void): void;
+    constructor(name: string, description: string);
+    onActionComplete(listener: (eventData: any) => void): void;
     removeActionCompleteListener(listener: (eventData: any[]) => void): void;
-    addAction(runnable: Runnable): void;
-    invoke(data: RunnableInput): Promise<any>;
+    addAction(action: Action): void;
+    invoke(datastore: DataStore): Promise<DataStore>;
 }
 export default SOP;
