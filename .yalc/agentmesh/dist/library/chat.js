@@ -7401,17 +7401,17 @@ ${error.stack}` : "");
     }
     return parentRun.child_execution_order + 1;
   }
-  async handleLLMStart(llm2, prompts, runId, parentRunId, extraParams, tags, metadata, name) {
+  async handleLLMStart(llm3, prompts, runId, parentRunId, extraParams, tags, metadata, name) {
     var _a;
     const execution_order = this._getExecutionOrder(parentRunId);
     const start_time = Date.now();
     const finalExtraParams = metadata ? { ...extraParams, metadata } : extraParams;
     const run = {
       id: runId,
-      name: name ?? llm2.id[llm2.id.length - 1],
+      name: name ?? llm3.id[llm3.id.length - 1],
       parent_run_id: parentRunId,
       start_time,
-      serialized: llm2,
+      serialized: llm3,
       events: [
         {
           name: "start",
@@ -7430,17 +7430,17 @@ ${error.stack}` : "");
     await ((_a = this.onLLMStart) == null ? void 0 : _a.call(this, run));
     return run;
   }
-  async handleChatModelStart(llm2, messages, runId, parentRunId, extraParams, tags, metadata, name) {
+  async handleChatModelStart(llm3, messages, runId, parentRunId, extraParams, tags, metadata, name) {
     var _a;
     const execution_order = this._getExecutionOrder(parentRunId);
     const start_time = Date.now();
     const finalExtraParams = metadata ? { ...extraParams, metadata } : extraParams;
     const run = {
       id: runId,
-      name: name ?? llm2.id[llm2.id.length - 1],
+      name: name ?? llm3.id[llm3.id.length - 1],
       parent_run_id: parentRunId,
       start_time,
-      serialized: llm2,
+      serialized: llm3,
       events: [
         {
           name: "start",
@@ -10167,14 +10167,14 @@ var CallbackManager = class _CallbackManager extends BaseCallbackManager {
   getParentRunId() {
     return this._parentRunId;
   }
-  async handleLLMStart(llm2, prompts, runId = void 0, _parentRunId = void 0, extraParams = void 0, _tags = void 0, _metadata = void 0, runName = void 0) {
+  async handleLLMStart(llm3, prompts, runId = void 0, _parentRunId = void 0, extraParams = void 0, _tags = void 0, _metadata = void 0, runName = void 0) {
     return Promise.all(prompts.map(async (prompt, idx) => {
       const runId_ = idx === 0 && runId ? runId : v4_default();
       await Promise.all(this.handlers.map((handler) => consumeCallback(async () => {
         var _a;
         if (!handler.ignoreLLM) {
           try {
-            await ((_a = handler.handleLLMStart) == null ? void 0 : _a.call(handler, llm2, [prompt], runId_, this._parentRunId, extraParams, this.tags, this.metadata, runName));
+            await ((_a = handler.handleLLMStart) == null ? void 0 : _a.call(handler, llm3, [prompt], runId_, this._parentRunId, extraParams, this.tags, this.metadata, runName));
           } catch (err) {
             console.error(`Error in handler ${handler.constructor.name}, handleLLMStart: ${err}`);
           }
@@ -10183,7 +10183,7 @@ var CallbackManager = class _CallbackManager extends BaseCallbackManager {
       return new CallbackManagerForLLMRun(runId_, this.handlers, this.inheritableHandlers, this.tags, this.inheritableTags, this.metadata, this.inheritableMetadata, this._parentRunId);
     }));
   }
-  async handleChatModelStart(llm2, messages, runId = void 0, _parentRunId = void 0, extraParams = void 0, _tags = void 0, _metadata = void 0, runName = void 0) {
+  async handleChatModelStart(llm3, messages, runId = void 0, _parentRunId = void 0, extraParams = void 0, _tags = void 0, _metadata = void 0, runName = void 0) {
     return Promise.all(messages.map(async (messageGroup, idx) => {
       const runId_ = idx === 0 && runId ? runId : v4_default();
       await Promise.all(this.handlers.map((handler) => consumeCallback(async () => {
@@ -10191,10 +10191,10 @@ var CallbackManager = class _CallbackManager extends BaseCallbackManager {
         if (!handler.ignoreLLM) {
           try {
             if (handler.handleChatModelStart) {
-              await ((_a = handler.handleChatModelStart) == null ? void 0 : _a.call(handler, llm2, [messageGroup], runId_, this._parentRunId, extraParams, this.tags, this.metadata, runName));
+              await ((_a = handler.handleChatModelStart) == null ? void 0 : _a.call(handler, llm3, [messageGroup], runId_, this._parentRunId, extraParams, this.tags, this.metadata, runName));
             } else if (handler.handleLLMStart) {
               const messageString = getBufferString(messageGroup);
-              await ((_b = handler.handleLLMStart) == null ? void 0 : _b.call(handler, llm2, [messageString], runId_, this._parentRunId, extraParams, this.tags, this.metadata, runName));
+              await ((_b = handler.handleLLMStart) == null ? void 0 : _b.call(handler, llm3, [messageString], runId_, this._parentRunId, extraParams, this.tags, this.metadata, runName));
             }
           } catch (err) {
             console.error(`Error in handler ${handler.constructor.name}, handleLLMStart: ${err}`);
@@ -15299,39 +15299,39 @@ var llmFactory = class {
     }
   }
   getTogetherAIModel() {
-    const llm2 = new ChatTogetherAI({
+    const llm3 = new ChatTogetherAI({
       model: this.options.model,
       apiKey: process.env.TOGETHER_AI_KEY,
       temperature: 0,
       cache: this.cache || false
     });
-    return llm2;
+    return llm3;
   }
   getOpenAIModel() {
-    const llm2 = new ChatOpenAI2({
+    const llm3 = new ChatOpenAI2({
       model: this.options.model,
       apiKey: process.env.OPEN_AI_KEY,
       temperature: 0,
       cache: this.cache || false
     });
-    return llm2;
+    return llm3;
   }
   getGroqModel() {
-    const llm2 = new ChatGroq({
+    const llm3 = new ChatGroq({
       model: this.options.model,
       apiKey: process.env.GROQ_API_KEY,
       cache: this.cache || false
     });
-    return llm2;
+    return llm3;
   }
   getGeminiModel() {
-    const llm2 = new ChatGoogleGenerativeAI({
+    const llm3 = new ChatGoogleGenerativeAI({
       apiKey: process.env.GEMINI_API_KEY,
       model: this.options.model,
       maxOutputTokens: 2048,
       cache: this.cache || false
     });
-    return llm2;
+    return llm3;
   }
 };
 var llm_default = GetModel;

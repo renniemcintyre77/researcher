@@ -1,103 +1,69 @@
-import { StandardOperatingProcedure, RunnableInput, RunnableOutput } from "agentmesh/core";
-import { ToolAction, AgentAction, ConditionalAction, Condition, Operator } from "agentmesh/core/actions";
-import { Serper, SerperImages, SerperSummaryAction, PeopleAlsoAskAction, RelatedSearchesAction } from "agentmesh/tools";
-import { SearchSummaryAction, RelatedQuestionsAction } from "agentmesh/actions";
-import { ChatPromptTemplate, HumanMessagePromptTemplate } from "agentmesh/templates";
-import { StringOutputParser, StructuredOutputParser, z, OutputFixingParser } from "agentmesh/parsers";
-import { groqLlama3_8B, groqLlama3_70B, togetherLlama3_70B, snowflake } from "../models";
-import { researchAgent, questionValidator } from "../agents";
-import { RedisClient as redis } from 'agentmesh/redis';
+import { StandardOperatingProcedure, DataStore, Action } from "agentmesh/core";
+import { groqLlama3_70B } from "src/models";
+import { researchAgent, questionValidator } from "src/agents";
+import { SerperTool, SerperImagesTool, SearchSummaryTool } from "agentmesh/tools";
+import ValidatorTool from "src/tools/validator";
 
-class ValidatorAction extends AgentAction {
+const sop = new StandardOperatingProcedure('Serp and Image Search', 'Does two searches in parallel');
 
-    async runAction(data: RunnableInput) : Promise<RunnableOutput>
-    {
-        let { query } = this.getActionData(data);
+sop.addAction(new Action('validator', false, async (datastore: DataStore) =>{
 
-        const prompt = ChatPromptTemplate.fromMessages([
-            this.getSystemPrompt(),
-            HumanMessagePromptTemplate.fromTemplate(`
+    const searchQuery = datastore.get('searchQuery');
+    const result = await ValidatorTool.invoke(questionValidator, groqLlama3_70B, searchQuery);
+    datastore.add('validator', result);
+    return result;
 
-            Please use your skills to assess whether this is a valid question:
+}));
 
-            {{query}}
+const validator = (datastore: DataStore) => {
+    const validator = datastore.get('validator');
+    return validator.valid;
+}
 
-            {{format_instructions}}
-            `, { templateFormat: "mustache"} )
-        ])
+sop.addAction(new Action('serper', true, async (datastore: DataStore) =>{
 
-        const parser = StructuredOutputParser.fromZodSchema(z.object({
-            valid: z.boolean().describe('Is the question valid?'),
-            reason: z.string().describe('Why is the question valid?')
-        }))
+    const searchQuery = datastore.get('searchQuery');
+    const result = await SerperTool.invoke(searchQuery);
+    datastore.add('serps', result);
+    return result;
 
-        try {
-            const response =  await prompt.pipe(this.llm).pipe(parser).invoke({
-                role: this.agent.role,
-                goal: this.agent.goal,
-                backstory: this.agent.backstory,
-                query: query,
-                format_instructions: parser.getFormatInstructions()
-            })
+}, validator));
 
-            return response;
-        } catch (error: any) {
-            const fixParser = OutputFixingParser.fromLLM(this.llm, parser);
-            const response = fixParser.parse(error.message);
-            return response;
-        }
+sop.addAction(new Action('serper-images', true, async (datastore: DataStore) =>{
 
+    const searchQuery = datastore.get('searchQuery');
+    const result = await SerperImagesTool.invoke(searchQuery);
+    datastore.add('images', result);
+    return result;
+
+}, validator));
+
+sop.addAction(new Action('relatedQuestions', false, async (datastore: DataStore) => {
+
+    const serps = datastore.get('serps');
+    let result;
+    if(serps.peopleAlsoAsk){
+        result = serps.peopleAlsoAsk.map((q: any) => q.question);
+    } else {
+        result = serps.relatedSearches.map((q: any) => q.query).slice(0,4)
     }
-}
+    datastore.add('relatedQuestions', result);
+    return result;
 
-class TestAction extends ToolAction {
+}, validator));
 
-    async runAction(data: RunnableInput): Promise<RunnableOutput>{
+sop.addAction(new Action('summary', false, async (datastore: DataStore) => {
 
-        const { searchQuery } = this.getActionData(data);
-        return {
-            name: "Rennie Mcintyre",
-            age: "47"
-        }
+    const searchQuery = datastore.get('searchQuery');
+    const serps = datastore.get('serps');
+    const result = await SearchSummaryTool.invoke(researchAgent, groqLlama3_70B, serps.organic, searchQuery);
+    datastore.add('summary', result);
+    return result;
 
-    }
-}
+}, validator));
 
-async function getSearchSop(name:string) {
+export default sop;
 
-    const sop = new StandardOperatingProcedure(name, 'Perplexity Style Search', false);
-    sop.addAction(new ValidatorAction(questionValidator, await groqLlama3_70B, 'validator', [{ path: '$.searchQuery', targetProperty: 'query' }]));
-
-    const searchSop = new StandardOperatingProcedure('Serp and Image Search', 'Does two searches in parallel', true);
-    searchSop.addAction(new SerperImages('images', [{ path: '$.searchQuery', targetProperty: 'searchQuery' }]));
-    searchSop.addAction(new Serper('serp',[{ path: '$.searchQuery', targetProperty: 'searchQuery' }]));
-
-    const summarySop = new StandardOperatingProcedure('Summary', 'Creates a summary of the Serp results');
-
-    const ifPAA = new ConditionalAction(
-        'IfPeopleAlsoAsk',
-        { dataPath: { path:'$.serp.peopleAlsoAsk', targetProperty: 'peopleAlsoAsk' }, operator: Operator.IS_NOT_NULL, value: true},
-        new PeopleAlsoAskAction('relatedQuestions', [{ path: '$.serp.peopleAlsoAsk', targetProperty: 'peopleAlsoAsk' }]),
-        new RelatedSearchesAction('relatedQuestions', [{ path: '$.serp.relatedSearches', targetProperty: 'relatedSearches' }])
-    )
-    summarySop.addAction(new SerperSummaryAction(researchAgent, await groqLlama3_70B, 'summary', [{ path: '$.searchQuery', targetProperty: 'query' }, { path: '$.serp.organic', targetProperty: 'research' }]));
-
-    const mainSop = new StandardOperatingProcedure('Main', 'Main SOP');
-    mainSop.addAction(searchSop);
-    mainSop.addAction(summarySop);
-    mainSop.addAction(ifPAA);
-
-    const ifAction = new ConditionalAction(
-        'ifAction',
-        { dataPath: { path:'$.validator.valid', targetProperty: 'validator' }, operator: Operator.EQUALS, value: true},
-        mainSop,
-        new TestAction('test', [{ path: '$.searchQuery', targetProperty: 'searchQuery' }]));
-    sop.addAction(ifAction);
-
-    return sop;
-}
-
-export default getSearchSop;
 
 
 

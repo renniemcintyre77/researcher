@@ -14,6 +14,6 @@ declare class SOP implements Runnable {
     onActionComplete(listener: (eventData: any) => void): void;
     removeActionCompleteListener(listener: (eventData: any[]) => void): void;
     addAction(action: Action): void;
-    invoke(datastore: DataStore): Promise<DataStore>;
+    invoke(datastore: DataStore): Promise<any>;
 }
 export default SOP;
