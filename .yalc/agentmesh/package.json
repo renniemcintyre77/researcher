@@ -3,23 +3,49 @@
     "version": "1.0.0",
     "description": "Toolkit for creating AI Agents",
     "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
     "exports": {
-        "./core": "./dist/library/core.js",
-        "./chat": "./dist/library/chat.js",
-        "./redis": "./dist/library/redis.js",
-        "./templates": "./dist/library/prompttemplates.js",
-        "./parsers": "./dist/library/parsers.js",
-        "./tools": "./dist/library/toolactions.js",
-        "./actions": "./dist/library/agentactions.js",
-        "./core/actions": "./dist/library/actions.js"
+        "./tools": "./dist/tools/index.js",
+        "./tools/retrievers": "./dist/tools/retrievers/index.js",
+        "./tools/summarizers": "./dist/tools/summarizers/index.js",
+        "./core": "./dist/core.js",
+        "./templates": "./dist/templates.js",
+        "./parsers": "./dist/parsers.js",
+        "./chat": "./dist/chat.js",
+        "./redis": "./dist/redis.js"
+    },
+    "typesVersions": {
+        "*": {
+            "tools": [
+                "dist/tools/index.d.ts"
+            ],
+            "tools/retrievers": [
+                "dist/tools/retrievers/index.d.ts"
+            ],
+            "tools/summarizers": [
+                "dist/tools/summarizers/index.d.ts"
+            ],
+            "core": [
+                "dist/core.d.ts"
+            ],
+            "templates": [
+                "dist/templates.d.ts"
+            ],
+            "parsers": [
+                "dist/parsers.d.ts"
+            ],
+            "chat": [
+                "dist/chat.d.ts"
+            ],
+            "redis": [
+                "dist/redis.d.ts"
+            ]
+        }
     },
     "engines": {
         "node": ">=14.0.0"
     },
-    "files": [
-        "dist/",
-        "README.md"
-    ],
     "scripts": {
         "script": "node ./dist/index.js",
         "build:js": "node esbuild.config.js",
@@ -81,5 +107,5 @@
         "ytdl-core": "^4.11.5",
         "zod": "^3.22.5"
     },
-    "yalcSig": "81d6b72b6cdffe835be702c240876783"
+    "yalcSig": "424abe30d3969ed696c64030bee26b27"
 }

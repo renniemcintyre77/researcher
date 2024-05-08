@@ -2,7 +2,7 @@
 import { Runnable } from './runnable';
 import { EventEmitter } from 'events';
 import Action from './action';
-import DataStore from './DataStore';
+import DataStore from './datastore';
 declare class SOP implements Runnable {
     name: string;
     description: string;

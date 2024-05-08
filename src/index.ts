@@ -1,213 +1,144 @@
-import PerplexitySOP from './sop/perplexity';
-import { PrismaClient } from '@prisma/client'
-import express from 'express';
-import crypto from 'crypto';
-import { DataStore } from "agentmesh/core";
+import { StandardOperatingProcedure, DataStore, Action, Tool, Agent } from "agentmesh/core";
+import { ChatPromptTemplate, HumanMessagePromptTemplate } from "agentmesh/templates";
+import { StringOutputParser, StructuredOutputParser, z, OutputFixingParser } from "agentmesh/parsers";
+import { groqLlama3_8B, groqLlama3_70B, togetherLlama3_70B, snowflake } from "./models";
+import { researchAgent, validatorAgent } from "./agents";
+import { RedisClient as redis } from 'agentmesh/redis';
+import { NewsTool, WebpageTool } from "agentmesh/tools/retrievers";
+import { SearchSummaryTool, ContentSummaryTool } from "agentmesh/tools/summarizers";
+import { llm } from "agentmesh/chat";
+import { RateLimiter } from 'limiter';
+import ValidatorTool from "./tools/validator";
+import prisma from "./db";
 
-const prisma = new PrismaClient()
+const main = async () => {
 
-const app = express();
-const port = process.env.PORT || 3000;
-app.use(express.json()); // Middleware to parse JSON bodies
+    const dataStore = new DataStore();
+    dataStore.add('searchQuery', 'Whisky');
+    dataStore.add('timePublished', '1h');
+    const rateLimit = 10;
 
-app.get('/api/sync', async (req, res) => {
+    const sop = new StandardOperatingProcedure('Serp and Image Search', 'Does two searches in parallel');
+    sop.onActionComplete((data) => {
+        console.log(`Completed Action: ${data.key}`);
+    });
 
-    const searchQuery = req.query.query;
-    if(searchQuery && searchQuery !== ""){
+    sop.addAction(new Action('news', false, async (datastore: DataStore) =>{
 
-    const perplexity = await getSearchSop('Manual');
-    const response = await perplexity.invoke({ searchQuery });
+        const searchQuery = datastore.get('searchQuery');
+        const timePublished = datastore.get('timePublished');
+        let result = await NewsTool.invoke(searchQuery, timePublished);
 
-    res.json(response);
+        // filter out links for yahoo
+        result = result.filter((n: any) => !n.link.includes('yahoo'));
 
+        datastore.add('news', { searchQuery, timePublished, data: result });
+        return result;
 
-    }
-});
+    }));
 
-const generateKey = (seed: string) => {
-    const hash = crypto.createHash('sha256').update(seed).digest('hex');
-    // Convert hexadecimal hash to a base36 string to shorten it and keep it alphanumeric
-    const encoded = BigInt('0x' + hash).toString(36).slice(0, 20); // slice to ensure consistent length
-    return encoded;
-}
+    sop.addAction(new Action('news-content', false, async (datastore: DataStore) =>{
 
-app.get('/api/questions', async (req, res) => {
-
-    try{
-        const questions = await prisma.question.findMany({
-            orderBy: {
-                createdAt: 'desc'
+        const news = datastore.get('news');
+        const urls = news.data.map((n:any) => n.link);
+        const result = await WebpageTool.invoke(urls);
+        // update news with content
+        news.data.forEach((n: any) => {
+            const correspondingResult = result.find((r: any) => r.link === n.link);
+            if (correspondingResult) {
+                n.content = correspondingResult.content;
             }
         });
-        for(let i=0; i<questions.length; i++){
-            questions[i].content = JSON.parse(questions[i].content);
-        }
 
-        const response = questions
-                         .filter((question: any) => question.content)
-                         .filter((question: any) => (question.content.validator && question.content.validator.valid) || (!question.content.validator))
-                         .map((question: any) => {
-            return {
-                key: question.key,
-                searchQuery: question.searchQuery,
-                image: question.content.images.images.find((img: any) => img.thumbnailWidth > img.thumbnailHeight)?.thumbnailUrl,
-                citationCount: question.content.summary.citedResearch.length,
-                summary: question.content.summary.summary.replace(/\[citation:\d+\]/g, '').split(' ').slice(0, 20).join(' ') + "...",
-            }
-        })
+        // filter out results that are more than 20000 characters
+        news.data = news.data.filter((n: any) => n.content && n.content.length < 20000);
+        datastore.add('news', news);
+        return result;
 
-        res.json(response);
-    } catch (error: any) {
-        res.status(500).send('Error fetching questions\n\n' + error.message);
-        throw error;
-    }
+    }));
 
-});
+    sop.addAction(new Action('news-validator', false, async (datastore: DataStore) =>{
 
-app.get('/api/key/:key', async (req, res) => {
-    const key = req.params.key?.toString();
-    if(key && key !== ""){
-        // check if the question already exists
-        const existingQuestion = await prisma.question.findFirst({
-            where: {
-                key: key,
-            },
-        });
-        if (existingQuestion) {
-            res.json({ ...existingQuestion });
-            return;
-        }
-        res.status(500).send('Invalid key');
-    } else {
-        res.status(500).send('Invalid query');
-    }
-});
+        const limiter = new RateLimiter({ tokensPerInterval: rateLimit, interval: 'minute' });
+        const news = datastore.get('news');
 
-app.post('/api/question', async (req, res) => {
-    const searchQuery = req.body.query?.toString();
-    if(searchQuery && searchQuery !== ""){
-        const key = await generateKey(searchQuery);
-        // check if the question already exists
-        const existingQuestion = await prisma.question.findFirst({
-            where: {
-                key: key,
-            },
-        });
-        if (existingQuestion) {
-            res.json({ key: existingQuestion.key });
-            return;
-        }
-        await prisma.question.create({
-            data: {
-                key: key,
-                searchQuery: searchQuery
-            },
-        });
-        res.json({ key: key });
-    } else {
-        res.status(500).send('Invalid query');
-    }
-});
-
-app.get('/api/go/:key', async (req, res) => {
-
-    const key = req.params.key?.toString();
-    const headers = {
-        'Content-Type': 'text/event-stream',
-        'Connection': 'keep-alive',
-        'Cache-Control': 'no-cache'
-    };
-    res.writeHead(200, headers);
-
-
-    if(key && key !== ""){
-        // check if the question already exists
-        const existingQuestion = await prisma.question.findFirst({
-            where: {
-                key: key,
-            },
-        });
-
-        if (existingQuestion && existingQuestion.content !== null) {
-
-            const data = JSON.parse(existingQuestion.content);
-
-            if (data['validator']) {
-                res.write(`data: ${JSON.stringify({ type: 'validator', data: data.validator })}\n\n`);;
-            }
-
-            if (data['images']) {
-                const images = data.images.images.map((image: any) => { return { thumbnail: image.thumbnailUrl, image: image.imageUrl }}).slice(0, 8);
-                await res.write(`data: ${JSON.stringify({ type: 'images', data: images })}\n\n`);
-            }
-
-            if (data['relatedQuestions']) {
-                await res.write(`data: ${JSON.stringify({ type: 'relatedQuestions', data: data.relatedQuestions })}\n\n`);
-            }
-
-            if (data['summary']) {
-                await res.write(`data: ${JSON.stringify({ type: 'summary', data: data.summary })}\n\n`);
-            }
-
-            res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
-
-
-        } else {
-            if(existingQuestion && existingQuestion.searchQuery && existingQuestion.searchQuery !== ""){
-
-                const actionComplete = async (eventData: any) => {
-
-                        console.log(`Received: ${eventData.key}`);
-
-                        if (eventData.key === 'validator') {
-                            res.write(`data: ${JSON.stringify({ type: 'validator', data: eventData.data })}\n\n`);;
-                        }
-
-                        if (eventData.key === 'serper-images') {
-                            const images = eventData.data.images.map((image: any) => { return { thumbnail: image.thumbnailUrl, image: image.imageUrl }}).slice(0, 8);
-                            res.write(`data: ${JSON.stringify({ type: 'images', data: images })}\n\n`);
-                        }
-
-                        if (eventData.key === 'relatedQuestions') {
-                            res.write(`data: ${JSON.stringify({ type: 'relatedQuestions', data: eventData.data })}\n\n`);
-                        }
-
-                        if (eventData.key === 'summary') {
-                            res.write(`data: ${JSON.stringify({ type: 'summary', data: eventData.data })}\n\n`);
-                        }
+        const summaryPromises = [];
+        for(let i=0; i<news.data.length; i++) {
+            summaryPromises.push(new Promise<any>(async (resolve, reject) => {
+                await limiter.removeTokens(1);
+                try{
+                    const result = await ValidatorTool.invoke(validatorAgent, togetherLlama3_70B, news.data[i].content, 'Whisky Enthusiasts');
+                    console.log(`${news.data[i].link} - ${result.valid}`);
+                    news.data[i].valid = result.valid;
+                    resolve(result);
+                } catch (error) {
+                    reject(`Error assessing the validity of news ${i}: ${error}`);
                 }
+            }));
+        }
 
-                PerplexitySOP.onActionComplete(actionComplete);
+        const result = await Promise.all(summaryPromises);
+        // filter out the news that are not valid
+        news.data = news.data.filter((n: any) => n.valid);
+        datastore.add('news', news)
+        return result;
 
-                const dataStore = new DataStore();
-                dataStore.add('searchQuery', existingQuestion.searchQuery);
+    }));
 
-                const response = await PerplexitySOP.invoke(dataStore);
-                // update prisma with the response
-                await prisma.question.update({
-                    where: {
-                        id: existingQuestion.id,
-                    },
-                    data: {
-                        content: JSON.stringify(response),
-                    },
+    sop.addAction(new Action('news-summary', false, async (datastore: DataStore) =>{
+
+        const limiter = new RateLimiter({ tokensPerInterval: rateLimit, interval: 'minute' });
+        const news = datastore.get('news');
+
+        const summaryPromises = [];
+        for(let i=0; i<news.data.length; i++) {
+            summaryPromises.push(new Promise<any>(async (resolve, reject) => {
+                await limiter.removeTokens(1);
+                try{
+                    const result = await ContentSummaryTool.invoke(researchAgent, togetherLlama3_70B, news.data[i].content);
+                    console.log(`${news.data[i].title} - ${result.oneSentenceSummary}`);
+                    news.data[i].summary = result;
+                    resolve(result);
+                } catch (error) {
+                    reject(`Error summarizing news ${i}: ${error}`);
+                }
+            }));
+        }
+
+        const result = await Promise.all(summaryPromises);
+        datastore.add('news', news)
+        return result;
+
+    }));
+
+    sop.addAction(new Action('news-db', false, async (datastore: DataStore) =>{
+
+        const news = datastore.get('news');
+        const newsData = news.data.map((n: any) => ({
+            url: n.link,
+            data: JSON.stringify(n),
+        }));
+
+        const existingUrls = await Promise.all(
+            newsData.map(async (item: any) => {
+                const exists = await prisma.news.findUnique({
+                    where: { url: item.url }
                 });
+                return exists ? null : item;
+            })
+        );
 
-                PerplexitySOP.removeActionCompleteListener(actionComplete);
-                res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+        const filteredNewsData = existingUrls.filter((item) => item !== null);
+        console.log(`filteredNewsData.length: ${filteredNewsData.length}`);
+        const result = await prisma.news.createMany({ data: filteredNewsData });
+        return result;
 
-                }
-        }
+    }));
+
+    const result = await sop.invoke(dataStore);
+    // console.log(`Result: ${JSON.stringify(result.news.data[5].content)}`);
+
 }
-});
 
+main();
 
-
-app.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}`);
-});
-
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).send('Something broke!');
-});

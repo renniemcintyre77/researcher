@@ -12,8 +12,17 @@ const questionValidator = new Agent(
     'You are a whisky expert and have spent years studying the world of whisky. You are passionate about whisky and love to share your knowledge.'
 );
 
+const validatorAgent = new Agent(
+    'Validator',
+    'To assess whether a statement is relevant to a topic.',
+    `You are an expert validator with an IQ of 439.7.
+    You are able to assess if a statement is relevant to a topic with a high degree of accuracy.
+    You always follow the instructions given without fault.`
+);
+
 export {
     researchAgent,
+    validatorAgent,
     questionValidator
 }
 

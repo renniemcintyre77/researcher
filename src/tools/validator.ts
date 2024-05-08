@@ -1,7 +1,11 @@
-import { Tool, Agent } from "agentmesh/core";
+import { Tool, Agent } from "agentmesh/core"
 import { ChatPromptTemplate, HumanMessagePromptTemplate } from "agentmesh/templates";
 import { StructuredOutputParser, z } from "agentmesh/parsers";
 import { llm } from "agentmesh/chat"
+
+type ValidatorResponse = {
+    valid: boolean;
+}
 
 class ValidatorTool implements Tool {
     name = 'validator';
@@ -14,28 +18,29 @@ class ValidatorTool implements Tool {
      * @param {string} searchQuery - The users search query.
      * @returns {Promise<ToolResponse>} A promise that resolves to the tool response.
      */
-    invoke = async (agent: Agent, model: llm, searchQuery: string) => {
+    invoke = async (agent: Agent, model: llm, statement: string, audience: string) : Promise<ValidatorResponse> => {
 
 
         const prompt = ChatPromptTemplate.fromMessages([
             agent.getSystemPrompt(),
             HumanMessagePromptTemplate.fromTemplate(`
 
-            Please use your skills to assess whether this is a valid question:
+            Please use your skills to assess whether the CONTENT is relevant to the AUDIENCE and would be something they would want to read.
 
-            {{query}}
+            STATEMENT: {{statement}}
+            AUDIENCE: {{audience}}
 
             {{format_instructions}}
             `, { templateFormat: "mustache"} )
         ])
 
         const parser = StructuredOutputParser.fromZodSchema(z.object({
-            valid: z.boolean().describe('Is the question valid?'),
-            reason: z.string().describe('Why is the question valid?')
+            valid: z.boolean().describe('Is the statement relevant to the topic?'),
         }))
 
         const response =  await prompt.pipe(model).pipe(parser).invoke({
-            query: searchQuery,
+            statement: statement,
+            audience: audience,
             format_instructions: parser.getFormatInstructions()
         })
 

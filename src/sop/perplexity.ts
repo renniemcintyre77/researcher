@@ -1,7 +1,8 @@
 import { StandardOperatingProcedure, DataStore, Action } from "agentmesh/core";
 import { groqLlama3_70B } from "src/models";
 import { researchAgent, questionValidator } from "src/agents";
-import { SerperTool, SerperImagesTool, SearchSummaryTool } from "agentmesh/tools";
+import { SerperTool, SerperImagesTool, NewsTool } from "agentmesh/tools/retrievers"
+import { SearchSummaryTool } from "agentmesh/tools/summarizers";
 import ValidatorTool from "src/tools/validator";
 
 const sop = new StandardOperatingProcedure('Serp and Image Search', 'Does two searches in parallel');
@@ -9,7 +10,7 @@ const sop = new StandardOperatingProcedure('Serp and Image Search', 'Does two se
 sop.addAction(new Action('validator', false, async (datastore: DataStore) =>{
 
     const searchQuery = datastore.get('searchQuery');
-    const result = await ValidatorTool.invoke(questionValidator, groqLlama3_70B, searchQuery);
+    const result = await ValidatorTool.invoke(questionValidator, groqLlama3_70B, searchQuery, 'Whisky Enthusiasts');
     datastore.add('validator', result);
     return result;
 
@@ -29,8 +30,12 @@ sop.addAction(new Action('serper', true, async (datastore: DataStore) =>{
 
 }, validator));
 
-sop.addAction(new Action('serper-images', true, async (datastore: DataStore) =>{
+sop.addAction(new Action('serper-images', true, async (datastore: DataStore, complete: boolean ) =>{
 
+    // If the action is already complete, just return with the data
+    if(complete){
+        return datastore.get('images');
+    }
     const searchQuery = datastore.get('searchQuery');
     const result = await SerperImagesTool.invoke(searchQuery);
     datastore.add('images', result);

@@ -1,25 +1,52 @@
 {
   "requestsFinished": 0,
-  "requestsFailed": 0,
-  "requestsRetries": 0,
-  "requestsFailedPerMinute": 0,
+  "requestsFailed": 1,
+  "requestsRetries": 1,
+  "requestsFailedPerMinute": 5,
   "requestsFinishedPerMinute": 0,
   "requestMinDurationMillis": null,
   "requestMaxDurationMillis": 0,
-  "requestTotalFailedDurationMillis": 0,
+  "requestTotalFailedDurationMillis": 34,
   "requestTotalFinishedDurationMillis": 0,
-  "crawlerStartedAt": "2024-05-03T18:54:07.466Z",
-  "crawlerFinishedAt": "2024-05-03T18:54:07.507Z",
-  "statsPersistedAt": "2024-05-03T18:54:07.507Z",
-  "crawlerRuntimeMillis": 52,
-  "crawlerLastStartTimestamp": 1714762447455,
-  "requestRetryHistogram": [],
+  "crawlerStartedAt": "2024-05-07T21:15:38.367Z",
+  "crawlerFinishedAt": "2024-05-07T21:15:48.992Z",
+  "statsPersistedAt": "2024-05-07T21:15:48.992Z",
+  "crawlerRuntimeMillis": 10642,
+  "crawlerLastStartTimestamp": 1715116538350,
+  "requestRetryHistogram": [
+    null,
+    null,
+    null,
+    1
+  ],
   "statsId": 0,
-  "requestAvgFailedDurationMillis": null,
+  "requestAvgFailedDurationMillis": 34,
   "requestAvgFinishedDurationMillis": null,
-  "requestTotalDurationMillis": 0,
-  "requestsTotal": 0,
-  "requestsWithStatusCode": {},
-  "errors": {},
-  "retryErrors": {}
+  "requestTotalDurationMillis": 34,
+  "requestsTotal": 1,
+  "requestsWithStatusCode": {
+    "403": 4
+  },
+  "errors": {
+    "/Users/renniemcintyre/Workspace/researcher/node_modules/@crawlee/basic/internals/basic-crawler.js:693:19": {
+      "missing error code": {
+        "Error": {
+          "Request blocked - received 403 status code.": {
+            "count": 1
+          }
+        }
+      }
+    }
+  },
+  "retryErrors": {
+    "/Users/renniemcintyre/Workspace/researcher/node_modules/@crawlee/basic/internals/basic-crawler.js:693:19": {
+      "missing error code": {
+        "Error": {
+          "Request blocked - received 403 status code.": {
+            "count": 3
+          }
+        }
+      }
+    }
+  }
 }

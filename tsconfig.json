@@ -29,16 +29,6 @@
     "rootDir": "./src",                                  /* Specify the root folder within your source files. */
     "moduleResolution": "node",                     /* Specify how TypeScript looks up a file from a given module specifier. */
     "baseUrl": "./",                                  /* Specify the base directory to resolve non-relative module names. */
-    "paths": {
-      "agentmesh/chat": [".yalc/agentmesh/dist/library/chat.d.ts"],
-      "agentmesh/redis": [".yalc/agentmesh/dist/library/redis.d.ts"],
-      "agentmesh/core": [".yalc/agentmesh/dist/library/core.d.ts"],
-      "agentmesh/core/actions": [".yalc/agentmesh/dist/library/actions.d.ts"],
-      "agentmesh/actions": [".yalc/agentmesh/dist/library/agentactions.d.ts"],
-      "agentmesh/tools": [".yalc/agentmesh/dist/library/toolactions.d.ts"],
-      "agentmesh/templates": [".yalc/agentmesh/dist/library/prompttemplates.d.ts"],
-      "agentmesh/parsers": [".yalc/agentmesh/dist/library/parsers.d.ts"],
-    },                                      /* Specify a set of entries that re-map imports to additional lookup locations. */
     // "rootDirs": [],                                   /* Allow multiple folders to be treated as one when resolving modules. */
     // "typeRoots": [],                                  /* Specify multiple folders that act like './node_modules/@types'. */
     // "types": [],                                      /* Specify type package names to be included without being referenced in a source file. */
