@@ -17,6 +17,7 @@ const main = async () => {
 
     const dataStore = new DataStore();
     dataStore.add('searchQuery', 'Whisky');
+    dataStore.add('category', 'Whisky');
     dataStore.add('timePublished', '1d');
     const rateLimit = 10;
 
@@ -35,13 +36,14 @@ const main = async () => {
         result = result.filter((n: any) => !n.link.includes('yahoo'));
 
         // Check db for existing links and filter out
-        let existingUrls = await db.select().from(newsTable).where(inArray(newsTable.url, result.map((n: any) => n.link)));
-        result = result.filter((n: any) => !existingUrls.some((e: any) => e.url === n.link));
+        if(result.length > 0) {
+            let existingUrls = await db.select().from(newsTable).where(inArray(newsTable.url, result.map((n: any) => n.link)));
+            result = result.filter((n: any) => !existingUrls.some((e: any) => e.url === n.link));
 
-        // Check db for existing failures and filter out
-        let existingFailures = await db.select().from(failuresTable).where(inArray(failuresTable.url, result.map((n: any) => n.link)));
-        result = result.filter((n: any) => !existingFailures.some((e: any) => e.url === n.link))
-
+            // Check db for existing failures and filter out
+            let existingFailures = await db.select().from(failuresTable).where(inArray(failuresTable.url, result.map((n: any) => n.link)));
+            result = result.filter((n: any) => !existingFailures.some((e: any) => e.url === n.link))
+        }
         datastore.add('news', { searchQuery, timePublished, data: result });
         return result;
 
@@ -103,9 +105,9 @@ const main = async () => {
         const result = await Promise.all(summaryPromises);
 
         // Get invalid urls
-        const invalidUrls = news.data.filter((r: any) => !r.valid).map((r: any) => {url: r.link});
+        const invalidUrls = news.data.filter((r: any) => !r.valid).map((r: any) => r.link);
         if(invalidUrls.length > 0) {
-            await db.insert(failuresTable).values(invalidUrls.map((u: any) => ({ url: u.url, status: 'RELEVANCE_CHECK_FAILED' })));
+            await db.insert(failuresTable).values(invalidUrls.map((u: any) => ({ url: u, status: 'RELEVANCE_CHECK_FAILED' })));
         }
         // filter out the news that are not valid
         news.data = news.data.filter((n: any) => n.valid);
@@ -143,12 +145,14 @@ const main = async () => {
     sop.addAction(new Action('news-db', false, async (datastore: DataStore) =>{
 
         const news = datastore.get('news');
+        const category = datastore.get('category');
         if(news.data.length === 0) {
             return;
         }
         const newsData = news.data.map((n: any) => ({
             url: n.link,
             content: JSON.stringify(n),
+            category: category
         }));
 
         const result = await db.insert(newsTable).values(newsData);

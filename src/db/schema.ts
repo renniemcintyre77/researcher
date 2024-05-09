@@ -23,6 +23,7 @@ export const news = sqliteTable("news", {
 	createdAt: text("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
 	updatedAt: integer("updated_at"),
 	url: text("url").notNull(),
+	category: text("category"),
 	content: text("content"),
 },
 (table) => {

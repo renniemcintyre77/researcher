@@ -1,5 +1,329 @@
 {
-  "usableSessionsCount": 0,
+  "usableSessionsCount": 11,
   "retiredSessionsCount": 0,
-  "sessions": []
+  "sessions": [
+    {
+      "id": "session_qOU3sQjZuX",
+      "cookieJar": {
+        "version": "tough-cookie@4.1.4",
+        "storeType": "MemoryCookieStore",
+        "rejectPublicSuffixes": true,
+        "enableLooseMode": false,
+        "allowSpecialUseDomain": true,
+        "prefixSecurity": "silent",
+        "cookies": []
+      },
+      "userData": {},
+      "maxErrorScore": 3,
+      "errorScoreDecrement": 0.5,
+      "expiresAt": "2024-05-09T08:00:59.502Z",
+      "createdAt": "2024-05-09T07:10:59.502Z",
+      "usageCount": 1,
+      "maxUsageCount": 50,
+      "errorScore": 0
+    },
+    {
+      "id": "session_zQMREhbvkT",
+      "cookieJar": {
+        "version": "tough-cookie@4.1.4",
+        "storeType": "MemoryCookieStore",
+        "rejectPublicSuffixes": true,
+        "enableLooseMode": false,
+        "allowSpecialUseDomain": true,
+        "prefixSecurity": "silent",
+        "cookies": []
+      },
+      "userData": {},
+      "maxErrorScore": 3,
+      "errorScoreDecrement": 0.5,
+      "expiresAt": "2024-05-09T08:00:59.520Z",
+      "createdAt": "2024-05-09T07:10:59.520Z",
+      "usageCount": 1,
+      "maxUsageCount": 50,
+      "errorScore": 0
+    },
+    {
+      "id": "session_EDe8fUiGmJ",
+      "cookieJar": {
+        "version": "tough-cookie@4.1.4",
+        "storeType": "MemoryCookieStore",
+        "rejectPublicSuffixes": true,
+        "enableLooseMode": false,
+        "allowSpecialUseDomain": true,
+        "prefixSecurity": "silent",
+        "cookies": []
+      },
+      "userData": {},
+      "maxErrorScore": 3,
+      "errorScoreDecrement": 0.5,
+      "expiresAt": "2024-05-09T08:00:59.524Z",
+      "createdAt": "2024-05-09T07:10:59.524Z",
+      "usageCount": 1,
+      "maxUsageCount": 50,
+      "errorScore": 0
+    },
+    {
+      "id": "session_ziYK4uOki8",
+      "cookieJar": {
+        "version": "tough-cookie@4.1.4",
+        "storeType": "MemoryCookieStore",
+        "rejectPublicSuffixes": true,
+        "enableLooseMode": false,
+        "allowSpecialUseDomain": true,
+        "prefixSecurity": "silent",
+        "cookies": [
+          {
+            "key": "__cf_bm",
+            "value": "Lep0W5tPyE_jMCzKtq2WmxEoLfqscLOl7ZV4yWS5tCk-1715238660-1.0.1.1-LmPHujcfmS5qgbxVsr77hz9oFYuXy2HV1ELmQ8Mz89IAzBD3fCbZc.2.f0G3Fg4Y4rw661r7WIYxEY6C2AIcIw",
+            "expires": "2024-05-09T07:41:00.000Z",
+            "domain": "www.prnewswire.com",
+            "path": "/",
+            "secure": true,
+            "httpOnly": true,
+            "hostOnly": false,
+            "creation": "2024-05-09T07:11:00.308Z",
+            "lastAccessed": "2024-05-09T07:11:00.308Z",
+            "sameSite": "none"
+          }
+        ]
+      },
+      "userData": {},
+      "maxErrorScore": 3,
+      "errorScoreDecrement": 0.5,
+      "expiresAt": "2024-05-09T08:00:59.525Z",
+      "createdAt": "2024-05-09T07:10:59.525Z",
+      "usageCount": 1,
+      "maxUsageCount": 50,
+      "errorScore": 0
+    },
+    {
+      "id": "session_z5YWWWTWVS",
+      "cookieJar": {
+        "version": "tough-cookie@4.1.4",
+        "storeType": "MemoryCookieStore",
+        "rejectPublicSuffixes": true,
+        "enableLooseMode": false,
+        "allowSpecialUseDomain": true,
+        "prefixSecurity": "silent",
+        "cookies": []
+      },
+      "userData": {},
+      "maxErrorScore": 3,
+      "errorScoreDecrement": 0.5,
+      "expiresAt": "2024-05-09T08:00:59.527Z",
+      "createdAt": "2024-05-09T07:10:59.527Z",
+      "usageCount": 1,
+      "maxUsageCount": 50,
+      "errorScore": 0
+    },
+    {
+      "id": "session_FhF0ebgoWV",
+      "cookieJar": {
+        "version": "tough-cookie@4.1.4",
+        "storeType": "MemoryCookieStore",
+        "rejectPublicSuffixes": true,
+        "enableLooseMode": false,
+        "allowSpecialUseDomain": true,
+        "prefixSecurity": "silent",
+        "cookies": []
+      },
+      "userData": {},
+      "maxErrorScore": 3,
+      "errorScoreDecrement": 0.5,
+      "expiresAt": "2024-05-09T08:00:59.533Z",
+      "createdAt": "2024-05-09T07:10:59.533Z",
+      "usageCount": 1,
+      "maxUsageCount": 50,
+      "errorScore": 0
+    },
+    {
+      "id": "session_BtBKYWZYcV",
+      "cookieJar": {
+        "version": "tough-cookie@4.1.4",
+        "storeType": "MemoryCookieStore",
+        "rejectPublicSuffixes": true,
+        "enableLooseMode": false,
+        "allowSpecialUseDomain": true,
+        "prefixSecurity": "silent",
+        "cookies": [
+          {
+            "key": "__cf_bm",
+            "value": "MFXVQn2bKVogroDya0Kb8hlSjG5pKILCKtSiWcsHZvc-1715238661-1.0.1.1-nre5oebx5kk8f0ngnUFUffZU3XVoFdkIt.SvEkjOR3MM5KdZ7xtGUgPOCxKUmv_3H_L8OTrKIOovlDTLLP4w6g",
+            "expires": "2024-05-09T07:41:01.000Z",
+            "domain": "mumbrella.com.au",
+            "path": "/",
+            "secure": true,
+            "httpOnly": true,
+            "hostOnly": false,
+            "creation": "2024-05-09T07:11:01.161Z",
+            "lastAccessed": "2024-05-09T07:11:01.161Z",
+            "sameSite": "none"
+          }
+        ]
+      },
+      "userData": {},
+      "maxErrorScore": 3,
+      "errorScoreDecrement": 0.5,
+      "expiresAt": "2024-05-09T08:00:59.534Z",
+      "createdAt": "2024-05-09T07:10:59.534Z",
+      "usageCount": 1,
+      "maxUsageCount": 50,
+      "errorScore": 0
+    },
+    {
+      "id": "session_tJwo2fCzdC",
+      "cookieJar": {
+        "version": "tough-cookie@4.1.4",
+        "storeType": "MemoryCookieStore",
+        "rejectPublicSuffixes": true,
+        "enableLooseMode": false,
+        "allowSpecialUseDomain": true,
+        "prefixSecurity": "silent",
+        "cookies": []
+      },
+      "userData": {},
+      "maxErrorScore": 3,
+      "errorScoreDecrement": 0.5,
+      "expiresAt": "2024-05-09T08:00:59.536Z",
+      "createdAt": "2024-05-09T07:10:59.536Z",
+      "usageCount": 1,
+      "maxUsageCount": 50,
+      "errorScore": 0
+    },
+    {
+      "id": "session_YXjYMevQau",
+      "cookieJar": {
+        "version": "tough-cookie@4.1.4",
+        "storeType": "MemoryCookieStore",
+        "rejectPublicSuffixes": true,
+        "enableLooseMode": false,
+        "allowSpecialUseDomain": true,
+        "prefixSecurity": "silent",
+        "cookies": []
+      },
+      "userData": {},
+      "maxErrorScore": 3,
+      "errorScoreDecrement": 0.5,
+      "expiresAt": "2024-05-09T08:00:59.538Z",
+      "createdAt": "2024-05-09T07:10:59.538Z",
+      "usageCount": 1,
+      "maxUsageCount": 50,
+      "errorScore": 0
+    },
+    {
+      "id": "session_Jixsjhbffr",
+      "cookieJar": {
+        "version": "tough-cookie@4.1.4",
+        "storeType": "MemoryCookieStore",
+        "rejectPublicSuffixes": true,
+        "enableLooseMode": false,
+        "allowSpecialUseDomain": true,
+        "prefixSecurity": "silent",
+        "cookies": [
+          {
+            "key": "_C_ETH",
+            "value": "1",
+            "domain": "msn.com",
+            "path": "/",
+            "secure": true,
+            "httpOnly": true,
+            "hostOnly": false,
+            "creation": "2024-05-09T07:11:00.289Z",
+            "lastAccessed": "2024-05-09T07:11:00.289Z"
+          },
+          {
+            "key": "_C_Auth",
+            "domain": "www.msn.com",
+            "path": "/en-sg/foodanddrink/cocktails/suntory-drops-east-meets-west-bourbon-aged-around-the-world",
+            "hostOnly": true,
+            "pathIsDefault": true,
+            "creation": "2024-05-09T07:11:00.291Z",
+            "lastAccessed": "2024-05-09T07:11:00.291Z"
+          },
+          {
+            "key": "USRLOC",
+            "expires": "2026-05-09T07:11:00.000Z",
+            "domain": "msn.com",
+            "path": "/",
+            "secure": true,
+            "httpOnly": true,
+            "hostOnly": false,
+            "creation": "2024-05-09T07:11:00.291Z",
+            "lastAccessed": "2024-05-09T07:11:00.291Z",
+            "sameSite": "none"
+          },
+          {
+            "key": "MUID",
+            "value": "3ED078E003B56D6A1E7E6C9A027E6C74",
+            "expires": "2025-06-03T07:11:00.000Z",
+            "domain": "msn.com",
+            "path": "/",
+            "hostOnly": false,
+            "creation": "2024-05-09T07:11:00.293Z",
+            "lastAccessed": "2024-05-09T07:11:00.293Z"
+          },
+          {
+            "key": "MUIDB",
+            "value": "3ED078E003B56D6A1E7E6C9A027E6C74",
+            "expires": "2025-06-03T07:11:00.000Z",
+            "domain": "www.msn.com",
+            "path": "/",
+            "httpOnly": true,
+            "hostOnly": true,
+            "creation": "2024-05-09T07:11:00.294Z",
+            "lastAccessed": "2024-05-09T07:11:00.294Z"
+          },
+          {
+            "key": "_EDGE_S",
+            "value": "F=1&SID=39D1569D7F43609A2EEF42E77E626125",
+            "domain": "msn.com",
+            "path": "/",
+            "httpOnly": true,
+            "hostOnly": false,
+            "creation": "2024-05-09T07:11:00.294Z",
+            "lastAccessed": "2024-05-09T07:11:00.294Z"
+          },
+          {
+            "key": "_EDGE_V",
+            "value": "1",
+            "expires": "2025-06-03T07:11:00.000Z",
+            "domain": "msn.com",
+            "path": "/",
+            "httpOnly": true,
+            "hostOnly": false,
+            "creation": "2024-05-09T07:11:00.294Z",
+            "lastAccessed": "2024-05-09T07:11:00.294Z"
+          }
+        ]
+      },
+      "userData": {},
+      "maxErrorScore": 3,
+      "errorScoreDecrement": 0.5,
+      "expiresAt": "2024-05-09T08:00:59.543Z",
+      "createdAt": "2024-05-09T07:10:59.543Z",
+      "usageCount": 1,
+      "maxUsageCount": 50,
+      "errorScore": 0
+    },
+    {
+      "id": "session_JRneQa5K85",
+      "cookieJar": {
+        "version": "tough-cookie@4.1.4",
+        "storeType": "MemoryCookieStore",
+        "rejectPublicSuffixes": true,
+        "enableLooseMode": false,
+        "allowSpecialUseDomain": true,
+        "prefixSecurity": "silent",
+        "cookies": []
+      },
+      "userData": {},
+      "maxErrorScore": 3,
+      "errorScoreDecrement": 0.5,
+      "expiresAt": "2024-05-09T08:01:00.356Z",
+      "createdAt": "2024-05-09T07:11:00.356Z",
+      "usageCount": 1,
+      "maxUsageCount": 50,
+      "errorScore": 0
+    }
+  ]
 }
