@@ -9,13 +9,15 @@ import { SearchSummaryTool, ContentSummaryTool } from "agentmesh/tools/summarize
 import { llm } from "agentmesh/chat";
 import { RateLimiter } from 'limiter';
 import ValidatorTool from "./tools/validator";
-import prisma from "./db";
+import { db } from './db';
+import { news as newsTable, failures as failuresTable } from './db/schema';
+import { eq, inArray } from 'drizzle-orm';
 
 const main = async () => {
 
     const dataStore = new DataStore();
     dataStore.add('searchQuery', 'Whisky');
-    dataStore.add('timePublished', '1h');
+    dataStore.add('timePublished', '1d');
     const rateLimit = 10;
 
     const sop = new StandardOperatingProcedure('Serp and Image Search', 'Does two searches in parallel');
@@ -32,6 +34,14 @@ const main = async () => {
         // filter out links for yahoo
         result = result.filter((n: any) => !n.link.includes('yahoo'));
 
+        // Check db for existing links and filter out
+        let existingUrls = await db.select().from(newsTable).where(inArray(newsTable.url, result.map((n: any) => n.link)));
+        result = result.filter((n: any) => !existingUrls.some((e: any) => e.url === n.link));
+
+        // Check db for existing failures and filter out
+        let existingFailures = await db.select().from(failuresTable).where(inArray(failuresTable.url, result.map((n: any) => n.link)));
+        result = result.filter((n: any) => !existingFailures.some((e: any) => e.url === n.link))
+
         datastore.add('news', { searchQuery, timePublished, data: result });
         return result;
 
@@ -39,21 +49,34 @@ const main = async () => {
 
     sop.addAction(new Action('news-content', false, async (datastore: DataStore) =>{
 
-        const news = datastore.get('news');
+        let news = datastore.get('news');
         const urls = news.data.map((n:any) => n.link);
+        if(urls.length > 0){
+
         const result = await WebpageTool.invoke(urls);
-        // update news with content
-        news.data.forEach((n: any) => {
-            const correspondingResult = result.find((r: any) => r.link === n.link);
-            if (correspondingResult) {
-                n.content = correspondingResult.content;
+
+        result.forEach(async (r: any) => {
+            if(!r.content || r.content.length === 0 || r.content.length > 20000) {
+                await db.insert(failuresTable).values({ url: r.link, status: 'FAILED' });
+            } else {
+                news.data.find((n: any) => n.link === r.link).content = r.content;
             }
         });
 
-        // filter out results that are more than 20000 characters
-        news.data = news.data.filter((n: any) => n.content && n.content.length < 20000);
+        // Find urls that are not in the result
+        const urlsNotInResult = urls.filter((u: any) => !result.some((r: any) => r.link === u));
+        if(urlsNotInResult.length > 0) {
+            await db.insert(failuresTable).values(urlsNotInResult.map((u: any) => ({ url: u, status: 'FAILED' })));
+        }
+
+        // Check db for existing failures and filter out
+        let existingFailures = await db.select().from(failuresTable).where(inArray(failuresTable.url, urls.map((n: any) => n)));
+        news.data = news.data.filter((n: any) => !existingFailures.some((e: any) => e.url === n.link))
         datastore.add('news', news);
         return result;
+    } else {
+        return [];
+    }
 
     }));
 
@@ -78,6 +101,12 @@ const main = async () => {
         }
 
         const result = await Promise.all(summaryPromises);
+
+        // Get invalid urls
+        const invalidUrls = news.data.filter((r: any) => !r.valid).map((r: any) => {url: r.link});
+        if(invalidUrls.length > 0) {
+            await db.insert(failuresTable).values(invalidUrls.map((u: any) => ({ url: u.url, status: 'RELEVANCE_CHECK_FAILED' })));
+        }
         // filter out the news that are not valid
         news.data = news.data.filter((n: any) => n.valid);
         datastore.add('news', news)
@@ -114,29 +143,20 @@ const main = async () => {
     sop.addAction(new Action('news-db', false, async (datastore: DataStore) =>{
 
         const news = datastore.get('news');
+        if(news.data.length === 0) {
+            return;
+        }
         const newsData = news.data.map((n: any) => ({
             url: n.link,
-            data: JSON.stringify(n),
+            content: JSON.stringify(n),
         }));
 
-        const existingUrls = await Promise.all(
-            newsData.map(async (item: any) => {
-                const exists = await prisma.news.findUnique({
-                    where: { url: item.url }
-                });
-                return exists ? null : item;
-            })
-        );
-
-        const filteredNewsData = existingUrls.filter((item) => item !== null);
-        console.log(`filteredNewsData.length: ${filteredNewsData.length}`);
-        const result = await prisma.news.createMany({ data: filteredNewsData });
+        const result = await db.insert(newsTable).values(newsData);
         return result;
 
     }));
 
     const result = await sop.invoke(dataStore);
-    // console.log(`Result: ${JSON.stringify(result.news.data[5].content)}`);
 
 }
 

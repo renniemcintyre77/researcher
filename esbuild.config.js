@@ -24,7 +24,7 @@ esbuild.build({
   format: "esm",
   tsconfig: "./tsconfig.json", // Point to your tsconfig
   plugins: [jsdomPatch],
-  external: ['agentmesh', '@prisma/client', 'express'],
+  external: ['agentmesh', '@prisma/client', 'express', 'dotenv', '@libsql/client'],
   // Add any other necessary options
 }).catch(() => process.exit(1));
 
